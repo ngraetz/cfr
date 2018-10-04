@@ -24,118 +24,118 @@ opts_chunk$set(small.mar=TRUE)
 
 ```{r, echo=FALSE, eval=TRUE, results='asis'}
 ## Order names
-all_ivs <- c(paste0('lag0_', c('r_size_20_24','r_size_25_29','r_size_10_19','r_size_15_24','r_size_15_19','r_size_15_29')),
-             paste0('lag5_', c('r_size_20_24','r_size_25_29','r_size_10_19','r_size_15_24','r_size_15_19','r_size_15_29')))
-all_interactions <- apply(expand.grid(all_ivs,c('epr','epr_15_24','unemp_15_24','log_ldi_pc')), 1, paste, collapse=":")
-all_interaction_names <- apply(expand.grid(rep('Growth',12),c('EPR','EPR 15:24','Unemp 15:24','Log(LDI/pc)')), 1, paste, collapse="*")
-names <- gsub('_','-',paste0('Growth rate (', gsub('r_size_','', all_ivs), ')'))
-  cov_names <- data.table(name = c(all_ivs,'epr','unemp_15_24','log_ldi_pc',all_interactions,'epr_15_24','r_ldi_pc','log_arable_pc','percent_agriculture','log_lag5_out_rate','ldi_pc_gap','lag5_net_migration','gbd_mx_shocks','edu','urbanicity','polity2','as.factor(year)1995','as.factor(year)2000','as.factor(year)2005','year','North Africa and Middle East','Sub-Saharan Africa','South Asia','East Asia','Asia','Oceania','Latin America and Caribbean','R^2','Adj. R^2','N'),
-                          cov_name = c(names,'EPR','Unemp 15:24','Log(LDI/pc)',all_interaction_names,'EPR 15:24','LDI/pc growth rate','log(ha/pc)','Percent agriculture','Lagged out-migration','LDI/pc gap','Lagged net-migration','Mortality shocks','Education','Urbanicity','Polity2','1995','2000','2005','Year','North Africa and Middle East','Sub-Saharan Africa','South Asia',
-                                 'East Asia','Asia','Oceania','Latin America and Caribbean','R squared','Adj. R squared','N'),
-                          cov_sort = c(1:88))
-
-format_decimals <- function(dt, v) {
-  dt[nchar(get(v))==3, (v) := paste0(get(v),'0')]
-  dt[nchar(get(v))==1, (v) := paste0(get(v),'.00')]
-}
-  
-## Format table data
-pull_table_data <- function(string_names = cov_names, file) {
-coefs <- readRDS(paste0('C:/Users/ngraetz/Documents/Penn/papers/cfr_migration/paper_figs/', file, '.RDS'))
-coefs[, name := gsub('dmean_','',name)]
-coefs[!(name %in% c('DIC','RMSE')), coef := round(coef, 2)]
-coefs[name == "DIC", coef := round(coef)]
-coefs[name == "RMSE", coef := round(coef, 5)]
-coefs[, coef := as.character(coef)]
-format_decimals(coefs[name!='N', ], 'coef')
-coefs[!grepl('-', coef), coef := paste0(' ',coef)]
-coefs[p<=0.1, coef := paste0(coef,'*')]
-coefs[p<=0.05, coef := paste0(coef,'*')]
-coefs[p>0.1, coef := paste0(coef,'!')]
-#coefs[!is.na(se), coef := cat(paste0(coef, '\n(', round(se,2), ')'))]
-# year_coefs <- data.table(model = coefs[1, model],
-#                         name = 'as.factor(year)1995',
-#                         coef = '--',
-#                         p = '--',
-#                         se = '--')
-# coefs <- rbind(coefs, year_coefs)
-coefs <- merge(coefs, string_names, by='name')
-return(coefs)
-}
-iv <- 'lag5_r_size_15_24'
-#all_files <- c('epr','epr_15_24','unemp_15_24','log_ldi_pc')
-file <- 'noedu_stage2_models_lag5_r_size_15_24_2018-08-16' 
-#for(file in all_files) {
-coefs <- pull_table_data(file = file)
-coefs[, coef := gsub('[!]',' ',coef)]
-coefs[, coef := paste0(coef,' ')]
-coefs <- dcast(coefs, cov_name + cov_sort ~ model, value.var='coef')
-## Fill in any NAs with --
-for(n in names(coefs)) coefs[is.na(get(n)), (n) := '--']
-#just_names <- cov_names[!(name %in% c('twhk_pv','twhk_is','twhk_ce','fwp_kt')), c('cov_name','cov_sort')]
-#coefs <- merge(coefs, just_names, by='cov_name')
-coefs[, cov := cov_name]
-coefs <- coefs[order(cov_sort)]
-coefs[, cov_sort := NULL]
-coefs[, cov := NULL]
-coefs[, Stage1 := NULL]
-coefs[, Stage1_v2 := NULL]
-setcolorder(coefs, c('cov_name', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries'))
-
-int_coefs <- pull_table_data(file = paste0('stage3_models_',iv,'_2018-08-23')) 
-int_coefs[, coef := gsub('[!]',' ',coef)]
-int_coefs[, coef := paste0(coef,' ')]
-int_coefs <- dcast(int_coefs, cov_name + cov_sort ~ model, value.var='coef')
-## Fill in any NAs with --
-for(n in names(int_coefs)) int_coefs[is.na(get(n)), (n) := '--']
-#just_names <- cov_names[!(name %in% c('twhk_pv','twhk_is','twhk_ce','fwp_kt')), c('cov_name','cov_sort')]
-#coefs <- merge(coefs, just_names, by='cov_name')
-int_coefs[, cov := cov_name]
-#int_coefs <- int_coefs[order(cov_sort)]
-#int_coefs[, cov_sort := NULL]
-int_coefs[, cov := NULL]
-#setcolorder(coefs, c('cov_name', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','Stage1','All countries'))
-int_coefs <- int_coefs[, c('cov_name', 'All countries','cov_sort')]
-setnames(int_coefs, 'All countries', 'All countries - interaction')
-
-all_coefs <- merge(coefs, int_coefs, by='cov_name', all.y=TRUE)
-all_coefs <- all_coefs[order(cov_sort)]
-all_coefs[, cov_sort := NULL]
-for(n in names(all_coefs)) all_coefs[is.na(get(n)), (n) := '--']
-# all_coefs[, sigs := 0]
-# for(n in c('All countries', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries - interaction')) all_coefs[grep('[*]',get(n)), sigs := sigs+1]
-#all_coefs <- all_coefs[!(cov_name %in% c('LDI/pc growth rate','Urbanicity','Polity2','R squared')), ]
-all_coefs <- all_coefs[!(cov_name %in% c('R squared')), ]
-
-setcolorder(all_coefs, c('cov_name', 'All countries', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries - interaction'))
-
-all_coefs[cov_name=='Growth rate (lag5-15-24)', cov_name := 'Population growth rate']
-all_coefs[cov_name=='Log(LDI/pc)', cov_name := 'Income per capita']
-all_coefs[cov_name=='Growth*Log(LDI/pc)', cov_name := 'Population growth rate * Income per capita']
-all_coefs[cov_name=='EPR 15:24', cov_name := 'Employee-population-ratio']
-all_coefs[cov_name=='LDI/pc gap', cov_name := 'Income per capita gap']
-
-t <- kable(all_coefs, format = 'latex', booktabs = TRUE, caption='Coefficients from regional models and model of all countries.', col.names = c('',c('All countries','NAME','SSA','Asia','Latin America', 'All countries + Interaction')), digits = 2, escape = FALSE) %>%
-   kable_styling(latex_options = c("striped","scale_down"), full_width = T, position = "center", font_size = 8) %>%
-   add_footnote(c("* indicate parameters where p<=0.10.", "** indicate parameters where p<=0.05.", "All models include country fixed effects.")) %>%
-   group_rows("", dim(all_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 1, dim(all_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 2) %>%
-   column_spec(column = 1, width = "15em")
-print(t)
-#}
+# all_ivs <- c(paste0('lag0_', c('r_size_20_24','r_size_25_29','r_size_10_19','r_size_15_24','r_size_15_19','r_size_15_29')),
+#              paste0('lag5_', c('r_size_20_24','r_size_25_29','r_size_10_19','r_size_15_24','r_size_15_19','r_size_15_29')))
+# all_interactions <- apply(expand.grid(all_ivs,c('epr','epr_15_24','unemp_15_24','log_ldi_pc')), 1, paste, collapse=":")
+# all_interaction_names <- apply(expand.grid(rep('Growth',12),c('EPR','EPR 15:24','Unemp 15:24','Log(LDI/pc)')), 1, paste, collapse="*")
+# names <- gsub('_','-',paste0('Growth rate (', gsub('r_size_','', all_ivs), ')'))
+#   cov_names <- data.table(name = c(all_ivs,'epr','unemp_15_24','log_ldi_pc',all_interactions,'epr_15_24','r_ldi_pc','log_arable_pc','percent_agriculture','log_lag5_out_rate','ldi_pc_gap','lag5_net_migration','gbd_mx_shocks','edu','urbanicity','polity2','as.factor(year)1995','as.factor(year)2000','as.factor(year)2005','year','North Africa and Middle East','Sub-Saharan Africa','South Asia','East Asia','Asia','Oceania','Latin America and Caribbean','R^2','Adj. R^2','N'),
+#                           cov_name = c(names,'EPR','Unemp 15:24','Log(LDI/pc)',all_interaction_names,'EPR 15:24','LDI/pc growth rate','log(ha/pc)','Percent agriculture','Lagged out-migration','LDI/pc gap','Lagged net-migration','Mortality shocks','Education','Urbanicity','Polity2','1995','2000','2005','Year','North Africa and Middle East','Sub-Saharan Africa','South Asia',
+#                                  'East Asia','Asia','Oceania','Latin America and Caribbean','R squared','Adj. R squared','N'),
+#                           cov_sort = c(1:88))
+# 
+# format_decimals <- function(dt, v) {
+#   dt[nchar(get(v))==3, (v) := paste0(get(v),'0')]
+#   dt[nchar(get(v))==1, (v) := paste0(get(v),'.00')]
+# }
+#   
+# ## Format table data
+# pull_table_data <- function(string_names = cov_names, file) {
+# coefs <- readRDS(paste0('C:/Users/ngraetz/Documents/Penn/papers/cfr_migration/paper_figs/', file, '.RDS'))
+# coefs[, name := gsub('dmean_','',name)]
+# coefs[!(name %in% c('DIC','RMSE')), coef := round(coef, 2)]
+# coefs[name == "DIC", coef := round(coef)]
+# coefs[name == "RMSE", coef := round(coef, 5)]
+# coefs[, coef := as.character(coef)]
+# format_decimals(coefs[name!='N', ], 'coef')
+# coefs[!grepl('-', coef), coef := paste0(' ',coef)]
+# coefs[p<=0.1, coef := paste0(coef,'*')]
+# coefs[p<=0.05, coef := paste0(coef,'*')]
+# coefs[p>0.1, coef := paste0(coef,'!')]
+# #coefs[!is.na(se), coef := cat(paste0(coef, '\n(', round(se,2), ')'))]
+# # year_coefs <- data.table(model = coefs[1, model],
+# #                         name = 'as.factor(year)1995',
+# #                         coef = '--',
+# #                         p = '--',
+# #                         se = '--')
+# # coefs <- rbind(coefs, year_coefs)
+# coefs <- merge(coefs, string_names, by='name')
+# return(coefs)
+# }
+# iv <- 'lag5_r_size_15_24'
+# #all_files <- c('epr','epr_15_24','unemp_15_24','log_ldi_pc')
+# file <- 'noedu_stage2_models_lag5_r_size_15_24_2018-08-16' 
+# #for(file in all_files) {
+# coefs <- pull_table_data(file = file)
+# coefs[, coef := gsub('[!]',' ',coef)]
+# coefs[, coef := paste0(coef,' ')]
+# coefs <- dcast(coefs, cov_name + cov_sort ~ model, value.var='coef')
+# ## Fill in any NAs with --
+# for(n in names(coefs)) coefs[is.na(get(n)), (n) := '--']
+# #just_names <- cov_names[!(name %in% c('twhk_pv','twhk_is','twhk_ce','fwp_kt')), c('cov_name','cov_sort')]
+# #coefs <- merge(coefs, just_names, by='cov_name')
+# coefs[, cov := cov_name]
+# coefs <- coefs[order(cov_sort)]
+# coefs[, cov_sort := NULL]
+# coefs[, cov := NULL]
+# coefs[, Stage1 := NULL]
+# coefs[, Stage1_v2 := NULL]
+# setcolorder(coefs, c('cov_name', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries'))
+# 
+# int_coefs <- pull_table_data(file = paste0('stage3_models_',iv,'_2018-08-23')) 
+# int_coefs[, coef := gsub('[!]',' ',coef)]
+# int_coefs[, coef := paste0(coef,' ')]
+# int_coefs <- dcast(int_coefs, cov_name + cov_sort ~ model, value.var='coef')
+# ## Fill in any NAs with --
+# for(n in names(int_coefs)) int_coefs[is.na(get(n)), (n) := '--']
+# #just_names <- cov_names[!(name %in% c('twhk_pv','twhk_is','twhk_ce','fwp_kt')), c('cov_name','cov_sort')]
+# #coefs <- merge(coefs, just_names, by='cov_name')
+# int_coefs[, cov := cov_name]
+# #int_coefs <- int_coefs[order(cov_sort)]
+# #int_coefs[, cov_sort := NULL]
+# int_coefs[, cov := NULL]
+# #setcolorder(coefs, c('cov_name', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','Stage1','All countries'))
+# int_coefs <- int_coefs[, c('cov_name', 'All countries','cov_sort')]
+# setnames(int_coefs, 'All countries', 'All countries - interaction')
+# 
+# all_coefs <- merge(coefs, int_coefs, by='cov_name', all.y=TRUE)
+# all_coefs <- all_coefs[order(cov_sort)]
+# all_coefs[, cov_sort := NULL]
+# for(n in names(all_coefs)) all_coefs[is.na(get(n)), (n) := '--']
+# # all_coefs[, sigs := 0]
+# # for(n in c('All countries', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries - interaction')) all_coefs[grep('[*]',get(n)), sigs := sigs+1]
+# #all_coefs <- all_coefs[!(cov_name %in% c('LDI/pc growth rate','Urbanicity','Polity2','R squared')), ]
+# all_coefs <- all_coefs[!(cov_name %in% c('R squared')), ]
+# 
+# setcolorder(all_coefs, c('cov_name', 'All countries', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries - interaction'))
+# 
+# all_coefs[cov_name=='Growth rate (lag5-15-24)', cov_name := 'Population growth rate']
+# all_coefs[cov_name=='Log(LDI/pc)', cov_name := 'Income per capita']
+# all_coefs[cov_name=='Growth*Log(LDI/pc)', cov_name := 'Population growth rate * Income per capita']
+# all_coefs[cov_name=='EPR 15:24', cov_name := 'Employee-population-ratio']
+# all_coefs[cov_name=='LDI/pc gap', cov_name := 'Income per capita gap']
+# 
+# t <- kable(all_coefs, format = 'latex', booktabs = TRUE, caption='Coefficients from regional models and model of all countries.', col.names = c('',c('All countries','NAME','SSA','Asia','Latin America', 'All countries + Interaction')), digits = 2, escape = FALSE) %>%
+#    kable_styling(latex_options = c("striped","scale_down"), full_width = T, position = "center", font_size = 8) %>%
+#    add_footnote(c("* indicate parameters where p<=0.10.", "** indicate parameters where p<=0.05.", "All models include country fixed effects.")) %>%
+#    group_rows("", dim(all_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 1, dim(all_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 2) %>%
+#    column_spec(column = 1, width = "15em")
+# print(t)
+# #}
 ```
 
 ```{r, echo=FALSE, eval=TRUE, results='asis'}
-region_country_map <- readRDS('C:/Users/ngraetz/Documents/Penn/papers/cfr_migration/paper_figs/region_country_map.rds')
-region_country_map <- region_country_map[!(Region %in% c("Central Europe, Eastern Europe, and Central Asia","High-income"))]
-kable(region_country_map, format = 'latex', caption = 'Countries included within each region.', booktabs = TRUE, digits = 2, escape = FALSE) %>%
-   kable_styling(latex_options = c("striped","scale_down"), full_width = T, position = "center", font_size = 8) %>%
-   column_spec(column = 1, width = "15em")
+# region_country_map <- readRDS('C:/Users/ngraetz/Documents/Penn/papers/cfr_migration/paper_figs/region_country_map.rds')
+# region_country_map <- region_country_map[!(Region %in% c("Central Europe, Eastern Europe, and Central Asia","High-income"))]
+# kable(region_country_map, format = 'latex', caption = 'Countries included within each region.', booktabs = TRUE, digits = 2, escape = FALSE) %>%
+#    kable_styling(latex_options = c("striped","scale_down"), full_width = T, position = "center", font_size = 8) %>%
+#    column_spec(column = 1, width = "15em")
 ```
 
 \pagebreak
 
 ```{r, echo=FALSE, eval=TRUE, results='asis'}
-desc <- fread('C:/Users/ngraetz/Documents/Penn/papers/cfr_migration/paper_figs/descriptives.csv')
+desc <- fread('C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/paper_figs/descriptives.csv')
 desc[, gbd_mx_shocks := exp(gbd_mx_shocks)]
 desc[gbd_mx_shocks==0.000001, gbd_mx_shocks := 0]
 t <- kable(desc, format = 'latex', booktabs = TRUE, longtable=TRUE, linesep = "", caption='Descriptives.', col.names = c('',c('Year','Out-rate','Growth (lag5)','log (LDI/pc)',' LDI/pc growth','LDI/pc gap','Mort shocks','EPR','Polity2','Urban')), digits = 2, escape = FALSE) %>%

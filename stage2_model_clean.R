@@ -57,7 +57,7 @@ d[, country_year := paste0(name,'_',year)]
 
 ## Try a couple new variables for absorptive capacity.
 ## Merge EPR 
-ilo_epr <- fread('C:/Users/ngraetz/Downloads/ILOSTAT_epr.csv')
+ilo_epr <- fread('C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/ILOSTAT_epr.csv')
 ilo_epr <- ilo_epr[sex=='SEX_T' & classif1.label=='Age: 15-24', ]
 setnames(ilo_epr, 'ref_area', 'ihme_loc_id')
 ilo_epr <- merge(ilo_epr, locs, by='ihme_loc_id')
@@ -71,7 +71,7 @@ setnames(ilo_epr, 'epr', 'epr_15_24')
 d <- merge(d, ilo_epr, by=c('name','year'), all.x=TRUE)
 
 ## Unemployment, youth total (% of total labor force ages 15-24) (modeled ILO estimate)
-ilo_unemp <- fread("C:/Users/ngraetz/Downloads/API_SL.UEM.1524.ZS_DS2_en_csv_v2_10034482/API_SL.UEM.1524.ZS_DS2_en_csv_v2_10034482.csv")
+ilo_unemp <- fread("C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/API_SL.UEM.1524.ZS_DS2_en_csv_v2_10034482/API_SL.UEM.1524.ZS_DS2_en_csv_v2_10034482.csv")
 ilo_unemp <- melt(ilo_unemp, id.vars = 'Country Name', measure.vars = as.character(1990:2010), variable.name = 'year', value.name = 'unemp_15_24')
 setnames(ilo_unemp, 'Country Name', 'name')
 ilo_unemp[, year := as.numeric(as.character(year))]
@@ -88,7 +88,7 @@ d <- merge(d, ilo_unemp, by=c('name','year'), all.x=TRUE)
 d[, unemp_15_24 := as.numeric(unemp_15_24)]
 
 ## Arable land
-land <- fread("C:/Users/ngraetz/Downloads/FAOSTAT_data_arable_land.csv")
+land <- fread("C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/FAOSTAT_data_arable_land.csv")
 land <- land[, c('Year','Area','Value')]
 setnames(land, c('Year','Area','Value'), c('year','name','arable_pc'))
 unique(d[!(name %in% land[, name]), name])

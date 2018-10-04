@@ -41,7 +41,7 @@ format_decimals <- function(dt, v) {
   
 ## Format table data
 pull_table_data <- function(string_names = cov_names, file) {
-coefs <- readRDS(paste0('C:/Users/ngraetz/Documents/Penn/papers/cfr_migration/paper_figs/', file, '.RDS'))
+coefs <- readRDS(paste0('C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/paper_figs/', file, '.RDS'))
 coefs[, name := gsub('dmean_','',name)]
 coefs[!(name %in% c('DIC','RMSE')), coef := round(coef, 2)]
 coefs[name == "DIC", coef := round(coef)]
@@ -104,20 +104,20 @@ all_coefs[, cov_sort := NULL]
 for(n in names(all_coefs)) all_coefs[is.na(get(n)), (n) := '--']
 # all_coefs[, sigs := 0]
 # for(n in c('All countries', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries - interaction')) all_coefs[grep('[*]',get(n)), sigs := sigs+1]
-all_coefs <- all_coefs[!(cov_name %in% c('LDI/pc growth rate','Urbanicity','Polity2','R squared')), ]
+main_coefs <- all_coefs[!(cov_name %in% c('LDI/pc growth rate','Urbanicity','Polity2','R squared')), ]
 
-setcolorder(all_coefs, c('cov_name', 'All countries', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries - interaction'))
+setcolorder(main_coefs, c('cov_name', 'All countries', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries - interaction'))
 
-all_coefs[cov_name=='Growth rate (lag5-15-24)', cov_name := 'Population growth rate']
-all_coefs[cov_name=='Log(LDI/pc)', cov_name := 'Income per capita']
-all_coefs[cov_name=='Growth*Log(LDI/pc)', cov_name := 'Population growth rate * Income per capita']
-all_coefs[cov_name=='EPR 15:24', cov_name := 'Employee-population-ratio']
-all_coefs[cov_name=='LDI/pc gap', cov_name := 'Income per capita gap']
+main_coefs[cov_name=='Growth rate (lag5-15-24)', cov_name := 'Population growth rate']
+main_coefs[cov_name=='Log(LDI/pc)', cov_name := 'Income per capita']
+main_coefs[cov_name=='Growth*Log(LDI/pc)', cov_name := 'Population growth rate * Income per capita']
+main_coefs[cov_name=='EPR 15:24', cov_name := 'Employee-population-ratio']
+main_coefs[cov_name=='LDI/pc gap', cov_name := 'Income per capita gap']
 
-t <- kable(all_coefs, format = 'latex', booktabs = TRUE, caption='Coefficients from regional models and model of all countries.', col.names = c('',c('All countries','NAME','SSA','Asia','Latin America', 'All countries + Interaction')), digits = 2, escape = FALSE) %>%
+t <- kable(main_coefs, format = 'latex', booktabs = TRUE, caption='Coefficients from regional models and model of all countries.', col.names = c('',c('All countries','NAME','SSA','Asia','Latin America', 'All countries + Interaction')), digits = 2, escape = FALSE) %>%
    kable_styling(latex_options = c("striped","scale_down"), full_width = T, position = "center", font_size = 8) %>%
    add_footnote(c("* indicate parameters where p<=0.10.", "** indicate parameters where p<=0.05.", "All models include country fixed effects.")) %>%
-   group_rows("", dim(all_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 1, dim(all_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 2) %>%
+   group_rows("", dim(main_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 1, dim(main_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 2) %>%
    column_spec(column = 1, width = "15em")
 print(t)
 #}
@@ -126,7 +126,28 @@ print(t)
 \pagebreak
 
 ```{r, echo=FALSE, eval=TRUE, results='asis'}
-change_table <- readRDS('C:/Users/ngraetz/Documents/Penn/papers/cfr_migration/paper_figs/change_table.RDS')
+appendix_coefs <- all_coefs[!(cov_name %in% c('R squared')), ]
+
+setcolorder(appendix_coefs, c('cov_name', 'All countries', 'North Africa and Middle East','Sub-Saharan Africa','Asia','Latin America and Caribbean','All countries - interaction'))
+
+appendix_coefs[cov_name=='Growth rate (lag5-15-24)', cov_name := 'Population growth rate']
+appendix_coefs[cov_name=='Log(LDI/pc)', cov_name := 'Income per capita']
+appendix_coefs[cov_name=='Growth*Log(LDI/pc)', cov_name := 'Population growth rate * Income per capita']
+appendix_coefs[cov_name=='EPR 15:24', cov_name := 'Employee-population-ratio']
+appendix_coefs[cov_name=='LDI/pc gap', cov_name := 'Income per capita gap']
+
+t <- kable(appendix_coefs, format = 'latex', booktabs = TRUE, caption='Coefficients from regional models and model of all countries.', col.names = c('',c('All countries','NAME','SSA','Asia','Latin America', 'All countries + Interaction')), digits = 2, escape = FALSE) %>%
+   kable_styling(latex_options = c("striped","scale_down"), full_width = T, position = "center", font_size = 8) %>%
+   add_footnote(c("* indicate parameters where p<=0.10.", "** indicate parameters where p<=0.05.", "All models include country fixed effects.")) %>%
+   group_rows("", dim(appendix_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 1, dim(appendix_coefs[!(cov_name %in% c('Adj. R squared', 'N')), ])[1] + 2) %>%
+   column_spec(column = 1, width = "15em")
+print(t)
+```
+
+\pagebreak
+
+```{r, echo=FALSE, eval=TRUE, results='asis'}
+change_table <- readRDS('C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/paper_figs/change_table.RDS')
 change_table[, Increases := linebreak(Increases)]
 change_table[, Decreases := linebreak(Decreases)]
 kable(change_table, format = 'latex', col.names = c('','Positive\ncontributions','Negative\ncontributions'), caption = 'Total positive and negative contributions from growth.', booktabs = TRUE, digits = 2, escape = FALSE) %>%
@@ -140,7 +161,7 @@ kable(change_table, format = 'latex', col.names = c('','Positive\ncontributions'
 \pagebreak
 
 ```{r, echo=FALSE, eval=TRUE, results='asis'}
-country_change_table <- fread('C:/Users/ngraetz/Documents/Penn/papers/cfr_migration/paper_figs/Figure_3_data.csv')
+country_change_table <- fread('C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/paper_figs/Figure_3_data.csv')
 country_change_table <- country_change_table[1:20,]
 country_change_table[, country_contribution := linebreak(country_contribution)]
 kable(country_change_table, format = 'latex', col.names = c('','Positive\ncontributions'), caption = 'Total positive contributions from growth.', booktabs = TRUE, digits = 2, escape = FALSE) %>%
