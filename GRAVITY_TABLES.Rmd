@@ -1,0 +1,64 @@
+---
+title: "CFR Migration Tables"
+author: "Nick Graetz"
+geometry: margin=2cm
+output: pdf_document
+---
+
+\pagebreak 
+
+```{r, echo=FALSE, results='asis', eval=TRUE, warning=FALSE, message=FALSE}
+library(Hmisc)
+library(knitr)
+library(data.table)
+library(kableExtra)
+for(file_tag in c('CONTINUOUS','QUANTILES')) {
+  
+m <- readRDS(paste0('C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/paper_figs_gravity/model_',file_tag,'.RDS'))
+m <- data.table(name=names(m$coefficients),
+                coef=m$coefficients)
+m <- m[!grep('country_orig',name), ]
+m[name=='(Intercept)', name := 'Intercept']
+m[, name := gsub('_', ' ', name)]
+mtable <- (kable(m, caption = 'Coefficients', format = 'latex', booktabs=TRUE, col.names = c('Variable','Coefficient'), align=c(rep('r',2)), longtable=TRUE, linesep = "", digits = 2, escape = FALSE) %>%
+     kable_styling(full_width = F, position = "right", font_size = 12))
+       # column_spec(column = 2, width = "8em") %>%
+       # column_spec(column = 3, width = "6em") %>%
+       # column_spec(column = 4, width = "6em"))
+    print(mtable)
+    cat("\n\n\\pagebreak\n")
+    
+t <- fread(paste0('C:/Users/ngraetz/Dropbox/Penn/papers/cfr_migration/paper_figs_gravity/Table_2_', Sys.Date(), '_',file_tag,'.csv'))
+t <- t[order(-positive_mean)]
+t[, order := seq(1:.N)]
+t[level=='global', order := 0.1]
+t[, level := gsub('World Bank ', '', level)]
+t[level=='Lower Middle Income', order := 0.2]
+t[level=='Low Income', order := 0.3]
+t[level=='Upper Middle Income', order := 0.4]
+t[level=='High Income', order := 0.5]
+t[level=='global', level := 'All countries']
+t <- t[order(order)]
+cols <- names(t)[!names(t)=='level']
+t[, (cols) := lapply(.SD,function(x) round((x/1000))), .SDcols=cols]
+t[, (cols) := lapply(.SD,function(x) format(x,big.mark=",", trim=TRUE)), .SDcols=cols]
+t[, migrants := linebreak(paste0(migrants,'\n -'), align='r')]
+t[, positive := linebreak(paste0(positive_mean, '\n (', positive_lower, ' to ', positive_upper, ')'), align=c('r'))]
+t[, negative := linebreak(paste0(negative_mean, '\n (', negative_lower, ' to ', negative_upper, ')'), align=c('r'))]
+t[positive_mean==0, positive := '--']
+t[negative_mean==0, negative := '--']
+t <- t[, c('level','migrants','positive','negative')]
+# t[, positive := cell_spec(positive, format='latex', bold=T)]
+table <- (kable(t, caption = 'Total contributions from growth.', format = 'latex', booktabs=TRUE, col.names = c('','Total migrants','Positive Contribution','Negative Contribution'), align=c(rep('r',4)), longtable=TRUE, linesep = "", digits = 0, escape = FALSE) %>%
+     kable_styling(full_width = F, position = "right", font_size = 12) %>%
+       group_rows('World Bank', 2, 4) %>%
+       group_rows('Regions', 5, 15) %>%
+       column_spec(column = 1, width = "12em"))
+       # column_spec(column = 2, width = "8em") %>%
+       # column_spec(column = 3, width = "6em") %>%
+       # column_spec(column = 4, width = "6em"))
+    print(table)
+    cat("\n\n\\pagebreak\n")
+}
+```
+
